@@ -1,7 +1,11 @@
 from tools.tavily_tool import tavily_search
+from tools.flight_tool import search_flights
 
 
-query = "Top 10 places to visit in india"
-response = tavily_search(query)
+# res = tavily_search("Best hotels in India")
+# print(res)
 
-print(response)
+
+res = search_flights("Plan a 7 days Nepal trip from India")
+print(res)
+
