@@ -62,7 +62,7 @@ async def travel_planner(request_data: TravelRequest):
             )
 
         result = run_travel_agent(
-            user_input=user_message,
+            user_query=user_message,
             thread_id=request_data.thread_id
         )
 

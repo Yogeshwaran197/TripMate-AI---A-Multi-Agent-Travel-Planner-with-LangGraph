@@ -38,7 +38,7 @@ def get_database_url():
 
 
 llm = ChatGroq(
-    model = "qwen/qwen3.8-27b",
+    model = "openai/gpt-oss-120b",
     api_key=GROQ_API_KEY
 )
 
@@ -53,9 +53,8 @@ class TripAgent(TypedDict):
     llm_calls : int
 
 
-
 def flight_agent(state: TripAgent) -> dict:
-
+    
     user_query = state['user_query']
     flight_data = search_flights(user_query)
 
@@ -69,8 +68,8 @@ def flight_agent(state: TripAgent) -> dict:
     }
 
 def hotel_agent(state : TripAgent) -> dict:
-
-    user_query = f"Best hotel for {state["user_query"]}"
+    
+    user_query = f"Best hotel for {state['user_query']}"
     hotel_data = tavily_search(user_query)
 
     return {
@@ -83,19 +82,19 @@ def hotel_agent(state : TripAgent) -> dict:
 
 
 def itinerary(state : TripAgent) -> dict :
-
+    
     prompt =  f"""
                 Create a complete travel itinerary.
-
+            
                 User Query:
                 {state['user_query']}
-
+            
                 Flight Results:
                 {state['flight_results']}
-
+            
                 Hotel Results:
                 {state['hotel_results']}
-
+            
                 Make the itinerary practical, budget-aware, and easy to follow.
                 """
 
@@ -113,8 +112,8 @@ def itinerary(state : TripAgent) -> dict :
     }
 
 
-def final_response(state : TripAgent) -> dict:
-
+def final_response(state : TripAgent) -> dict :
+    
     prompt =  f"""
             Generate the final travel response for the user.
 
@@ -130,19 +129,19 @@ def final_response(state : TripAgent) -> dict:
             Itinerary:
             {state['itinerary']}
 
-            Format the final answer beautifully using these sections:
-
-            1. Trip Summary
-            2. Flight Information
-            3. Hotel Suggestions
-            4. Day-by-Day Itinerary
-            5. Estimated Budget
-            6. Final Recommendations
+            Create a helpful, practical travel response covering:
+            1. Trip overview and highlights
+            2. Flight information
+            3. Hotel suggestions
+            4. Day-by-day itinerary summary
+            5. Approximate budget estimate
+            6. Final tips and recommendations
 
             Important:
-            - Be clear and practical.
-            - Mention that live flight API may not provide ticket prices if pricing is unavailable.
+            - Be clear, practical, and informative.
+            - Mention that live flight API may not provide exact ticket prices.
             - Keep the response useful for real travel planning.
+            - Use conversational but professional tone.
             """
 
     response = llm.invoke([
@@ -161,7 +160,6 @@ def final_response(state : TripAgent) -> dict:
 
 #bulid Graph or workflow for trip agent 
 
-
 graph =  StateGraph(TripAgent)
 
 graph.add_node("Flight_agent", flight_agent)
@@ -169,13 +167,11 @@ graph.add_node("Hotel_agent", hotel_agent)
 graph.add_node("itinerary", itinerary)
 graph.add_node("final_response", final_response)
 
-
 graph.add_edge(START, "Flight_agent")
 graph.add_edge("Flight_agent", "Hotel_agent")
-graph.add_edge("Hotel_agent", "itinerary")  
+graph.add_edge("Hotel_agent", "itinerary") 
 graph.add_edge("itinerary", "final_response")
-graph.add_edge("final_response" , END)       
-
+graph.add_edge("final_response" , END)      
 
 database_url = get_database_url()
 conn = psycopg.connect(
@@ -202,7 +198,7 @@ def run_travel_agent(user_query ,  thread_id):
     }}
 
 
-    result = travel_gent.invoke( {
+    result = travel_gent.invoke({
         "user_query" :  user_query,
         "messages" : [],
         "flight_results" : "",
@@ -223,7 +219,3 @@ def run_travel_agent(user_query ,  thread_id):
         "itinerary" :  result.get("itinerary", ""),
         "llm_calls" :  result.get("llm_calls", 0)
     }
-
-
-
-
