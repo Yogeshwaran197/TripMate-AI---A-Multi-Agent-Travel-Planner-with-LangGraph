@@ -1,22 +1,8 @@
-from tools.tavily_tool import tavily_search
-from tools.flight_tool import search_flights
-from backend import run_travel_agent
+from mcp_client_test import tavily_mcp_search
+import asyncio
 
 
-# res = tavily_search("Best hotels in India")
-# print(res)
-
-
-#res = search_flights("Plan a 7 days Nepal trip from India")
-#print(res)
-
-user_query = input("Enter travel request : ")
-
-result =  run_travel_agent(
-    user_query,
-    "yogi03" 
-)
-
-print(result['answer'])
-
+if __name__ == "__main__":
+    result = asyncio.run(tavily_mcp_search("what is jev model? will that replace llm?"))
+    print(result)
 

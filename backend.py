@@ -14,6 +14,10 @@ from typing import Annotated, List , TypedDict, Sequence
 from tools.flight_tool import search_flights
 from tools.tavily_tool import tavily_search
 
+#mcp 
+import asyncio
+from mcp_client_test import tavily_mcp_search
+
 
 load_dotenv()
 
@@ -70,7 +74,9 @@ def flight_agent(state: TripAgent) -> dict:
 def hotel_agent(state : TripAgent) -> dict:
     
     user_query = f"Best hotel for {state['user_query']}"
-    hotel_data = tavily_search(user_query)
+    #hotel_data = tavily_search(user_query)
+
+    hotel_data = asyncio.run(tavily_mcp_search(user_query))
 
     return {
         "hotel_results" : hotel_data,
