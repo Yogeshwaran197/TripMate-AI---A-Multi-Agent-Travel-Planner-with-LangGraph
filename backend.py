@@ -1,4 +1,5 @@
 import os
+import json
 import operator
 from dotenv import load_dotenv
 from langchain_groq import ChatGroq
@@ -16,7 +17,7 @@ from tools.tavily_tool import tavily_search
 
 #mcp 
 import asyncio
-from mcp_client_test import tavily_mcp_search
+from mcp_client import tavily_mcp_search, aviation_mcp
 
 
 load_dotenv()
@@ -42,7 +43,7 @@ def get_database_url():
 
 
 llm = ChatGroq(
-    model = "openai/gpt-oss-120b",
+    model = "openai/gpt-oss-20b",
     api_key=GROQ_API_KEY
 )
 
@@ -57,7 +58,7 @@ class TripAgent(TypedDict):
     llm_calls : int
 
 
-def flight_agent(state: TripAgent) -> dict:
+'''def flight_agent(state: TripAgent) -> dict:
     
     user_query = state['user_query']
     flight_data = search_flights(user_query)
@@ -70,6 +71,77 @@ def flight_agent(state: TripAgent) -> dict:
         ],
         "llm_calls" : state.get("llm_calls", 0) + 1
     }
+'''
+
+FLIGHT_AGENT_PROMPT = """
+You are Traval flight expert
+
+User Query:
+{user_query}
+
+Airport Information:
+{airport_data}
+
+Airline Information:
+{airline_data}
+
+Generate:
+    1.Likely departure airport
+    2.Likely arrival airport
+    3.Airlines serving this route
+    4.Typical flight duration
+    5.Esitmated airfare range
+    6.Peak season pricing warning
+    7.Booking advice
+
+
+return concise travel guidence
+"""
+
+
+def flight_agent(state: TripAgent):
+
+    query = state["user_query"]
+
+    try:
+        airport = asyncio.run(
+            aviation_mcp("list_airports")
+        )
+
+        airlines = asyncio.run(
+            aviation_mcp("list_airlines")
+        )
+
+        print("\nAirports", airport)
+        print("\nAirlines", airlines)
+
+        prompt = FLIGHT_AGENT_PROMPT.format(
+            user_query=query,
+            airport_data =  str(airport)[3000:],
+            airline_data = str(airlines)[3000:]
+        )
+
+        response = llm.invoke([
+            SystemMessage(content="You're expert travel flight planner"),
+            HumanMessage(content=prompt)
+        ])
+
+        flight_data = response.content
+
+    except Exception as e:
+
+        flight_data = f"Flight date unavailable : {str(e)}"
+        
+
+    return {
+        "flight_results" : flight_data,
+        "messages" : [
+            AIMessage(content = "Flight details succesfully fetched")
+        ],
+        "llm_calls" : state.get("llm_calls", 0) + 1
+    }
+        
+
 
 def hotel_agent(state : TripAgent) -> dict:
     

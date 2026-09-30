@@ -1,8 +1,6 @@
-from mcp_client_test import tavily_mcp_search
 import asyncio
+from mcp_client import get_tools_name
 
 
 if __name__ == "__main__":
-    result = asyncio.run(tavily_mcp_search("what is jev model? will that replace llm?"))
-    print(result)
-
+    asyncio.run(get_tools_name())

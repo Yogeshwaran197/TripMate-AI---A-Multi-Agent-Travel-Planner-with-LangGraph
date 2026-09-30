@@ -10,6 +10,9 @@ from pydantic import BaseModel
 
 from backend import run_travel_agent
 
+import nest_asyncio
+nest_asyncio.apply()
+
 BASE_DIR = Path(__file__).resolve().parent
 
 app = FastAPI(
@@ -19,9 +22,27 @@ app = FastAPI(
 )
 
 
+class NoCacheStaticFiles(StaticFiles):
+    """Serve static files with no-cache headers.
+
+    Prevents browsers from reusing a stale script.js/style.css after edits,
+    which otherwise masks fixes on the frontend.
+    """
+
+    def is_not_modified(self, response_headers, request_headers) -> bool:
+        return False
+
+    async def get_response(self, path, scope):
+        response = await super().get_response(path, scope)
+        response.headers["Cache-Control"] = "no-store, no-cache, must-revalidate"
+        response.headers["Pragma"] = "no-cache"
+        response.headers["Expires"] = "0"
+        return response
+
+
 app.mount(
     "/static",
-    StaticFiles(directory=str(BASE_DIR / "static")),
+    NoCacheStaticFiles(directory=str(BASE_DIR / "static")),
     name="static"
 )
 

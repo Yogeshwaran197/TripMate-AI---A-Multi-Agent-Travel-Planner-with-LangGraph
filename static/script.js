@@ -161,8 +161,35 @@ function cleanMarkdown(text) {
   return html;
 }
 
+// Normalize a value into a string.
+// The API can return MCP content blocks (arrays/objects) instead of plain
+// text, which would make string methods like .trim() throw.
+function toText(value) {
+  if (typeof value === 'string') return value;
+  if (value === null || value === undefined) return '';
+
+  if (Array.isArray(value)) {
+    return value.map(toText).filter(Boolean).join('\n\n');
+  }
+
+  if (typeof value === 'object') {
+    if (typeof value.text === 'string') return value.text;
+    try { return JSON.stringify(value, null, 2); } catch (e) { return String(value); }
+  }
+
+  return String(value);
+}
+
 // Display structured travel results
 function displayTravelResults(data) {
+  // Normalize once so every field below is guaranteed to be a string
+  data = {
+    answer: toText(data.answer),
+    flight_results: toText(data.flight_results),
+    hotel_results: toText(data.hotel_results),
+    itinerary: toText(data.itinerary)
+  };
+
   const container = document.createElement('div');
   container.className = 'travel-results';
   
